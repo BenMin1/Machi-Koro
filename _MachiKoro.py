@@ -1,7 +1,5 @@
 import numpy as np
-prices = [1,1,3,6,3,1,2,5,3,2,2,3,6,7,8,4,10,16,22]
-bank = [6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6]
-
+from _Cards import *
 class MachiKoro():
 
     def __init__(self, players):
@@ -9,38 +7,77 @@ class MachiKoro():
         self.num_players = len(players)
         self.players = players
         self.turn_counter = 0
-
+        self.Deck = OpeningDeck()
     def ResetGame(self):
         self.turn_counter = 1
+        self.Deck.restart()
         for player in self.players:
             player.coins = 3
-            player.cards = "Starting Cards"
+            player.cards = [1]+ [0] * 4 + [1] + [0]*13
 
-    def Payouts(self, player):
-        PayRedCards()
-        CollectBlueCards()
-        CollectGreenPurpleCards()
+    def Red_Payouts (self, red_index, cost, player_rolled, player_other):
+        mall = player_other.check_mall()  
+        owed = player_other.cards[red_index] * (cost + mall)
+        paid = min(player_rolled.coins, owed)
+        player_rolled.coins -= paid
+        player_other.coins += paid
+    
+    def Blue_Payouts(self, roll, player):
 
-    def Buying(self, player):
-        buy_attempt = player.choose_buy(other_players)
-        if buy_attempt is good then buy it otherwise run it again
-      
-    def Turn (self, player):
+        if roll    ==1: player.coins += player.cards[0]
+        elif roll  ==2: player.coins += player.cards[1]
+        elif roll  ==5: player.coins += player.cards[2]
+        elif roll  ==9: player.coins += player.cards[3] * 5
+        elif roll ==10: player.coins += player.cards[4] * 3
+        else: return False
+    
+    def Green_Payouts(self, roll, player):
+        if roll==2 or roll ==3:     player.coins +=  player.cards[4] * (1 + player.check_mall())
+        elif roll  ==4:             player.coins +=  player.cards[5] * (3 + player.check_mall())
+        elif roll  ==7:             player.coins +=  player.cards[6] * (3 * player.cards[1])
+        elif roll  ==8:             player.coins +=  player.cards[7] * (3 * (player.cards[2] + player.cards[3]))
+        elif roll ==11 or roll==12: player.coins +=  player.cards[8] * (2 * (player.cards[0] + player.cards[4]))
+        else: return False
+    
+    def Purple_Payouts(self, player):
+        if player.cards[12] ==1: print("Stadium")
+        if player.cards[13] ==1: print("TV Station")
+        if player.cards[14] ==1: print("Business Center")
+        
+    def Turn (self, player, doubles = False):
         # Player chooses how many dice to roll. The player needs a train station to have the option to roll 2 dice
         dice = player.choose_dice()
         roll = sum(np.random.randint(1, 7, size = dice))
 
         # Player chooses if they want to roll again. The player needs the Radio Tower to have this option
-        if("Player has Radio Tower"): player.choose_reroll(roll)
+        if(player.check_radio(roll)): 
+            roll = sum(np.random.randint(1, 7, size = dice))
 
-        # Now that we know the dice roll everyone gets payed
-        self.Payouts()
+        # Now that we know the dice roll check for red cards from other players
+        if roll == 3 and player.coins > 0: 
+            for player_other in self.players[player.turn_order::-1]: self.Red_Payouts(red_index = 10, cost = 1, player_rolled = player, player_other = player_other)
+        if (roll == 9 or roll == 10) and player.coins > 0:
+            for player_other in self.players[player.turn_order+1:] : self.Red_Payouts(red_index = 11, cost = 2, player_rolled = player, player_other = player_other)
+
+        # If the roll has a blue card then everyone checks their blue cards
+        if (roll == 1 or roll == 2 or roll ==5 or roll == 9 or roll == 10):
+            for blue_player in self.players: self.Blue_Payouts(roll=roll, player=blue_player)
+
+        # Player now checks green cards
+        self.Green_Payouts(roll= roll, player=player)
+
+        #Lastly check for purple cards if 6 is rolled
+        if roll == 6: self.Purple_Payouts(player= player)
 
         # The next step is the buying phase where the player can decide to buy a card
-        self.Buying(player)
+        buy_attempt = player.choose_buy(self.Deck)
+        if player.coins > self.Deck.card_types[buy_attempt].cost and self.Deck.card_amounts[buy_attempt]>0: 
+            player.coins -= self.Deck.card_types[buy_attempt].cost
+            player.cards[buy_attempt] += 1
+            self.Deck.card_amounts[buy_attempt] -=1
 
         # If the player rolled doubles and has the amusement park then they can take another turn once
-        if that is true: self.Turn(player)
+        if (doubles == False and player.check_double(roll)): self.Turn(player, doubles = True)
 
         # Check if the player won. If the turn returns true than the player won the game
         return player.check_win()
@@ -50,6 +87,9 @@ class MachiKoro():
         self.ResetGame()
         anyoneWin = False
         while(anyoneWin == False):
+            print(self.turn_counter)
             for player in self.players:
                 anyoneWin = self.Turn (player)
                 if anyoneWin == True: break
+            self.turn_counter += 1
+        print("SOMEONE WON YAY! FIGURE OUT WHO IT IS PLEASE!")
