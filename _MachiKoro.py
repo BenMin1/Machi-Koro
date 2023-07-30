@@ -8,13 +8,39 @@ class MachiKoro():
         self.players = players
         self.turn_counter = 0
         self.Deck = OpeningDeck()
+
     def ResetGame(self):
         self.turn_counter = 1
         self.Deck.restart()
         for player in self.players:
             player.coins = 3
             player.cards = [1]+ [0] * 4 + [1] + [0]*13
+            player.gamesPlayed += 1
 
+    def WinSequence(self, winner):
+        print(winner.cards)
+        winner.gamesWon += 1
+        print(f"{winner.name} WON!!! Their win percentage is {100* winner.gamesWon / winner.gamesPlayed}")
+#  Actions when 6 is rolled
+    def Stadium_Roll(self, player):
+        for other_player in self.players:
+            if other_player == player : continue
+            paid = min(2, other_player.coins)
+            other_player.coins -= paid
+            player.coins += paid
+
+    def TV_Station_Roll(self, player):
+        target_player = player.TV_Station_Action(self.players)
+        paid = min(5, target_player.coins)
+        target_player.coins -= paid
+        player.coins += paid
+
+    def Business_Center_Roll(self, player):
+        target_player, target_card = player.Business_Center_Action(self.players)
+        if target_player != player and target_card <12 and target_player.cards[target_card] > 0:
+            target_player.cards[target_card] -= 1
+            player.cards[target_card] += 1
+        
     def Red_Payouts (self, red_index, cost, player_rolled, player_other):
         mall = player_other.check_mall()  
         owed = player_other.cards[red_index] * (cost + mall)
@@ -40,10 +66,21 @@ class MachiKoro():
         else: return False
     
     def Purple_Payouts(self, player):
-        if player.cards[12] ==1: print("Stadium")
-        if player.cards[13] ==1: print("TV Station")
-        if player.cards[14] ==1: print("Business Center")
-        
+        if player.cards[12] ==1: self.Stadium_Roll(player)
+        if player.cards[13] ==1: self.TV_Station_Roll(player)
+        if player.cards[14] ==1: self.Business_Center_Roll(player)
+    
+    def Buy (self, player):
+        buy_attempt = player.choose_buy(self.Deck)
+        if buy_attempt >=12 and player.cards[buy_attempt] == 1: return False 
+
+        if buy_attempt >=12 and buy_attempt<=14 and sum(player.cards[12:15]) == 1: return False
+
+        if player.coins > self.Deck.card_types[buy_attempt].cost and self.Deck.card_amounts[buy_attempt]>0: 
+            player.coins -= self.Deck.card_types[buy_attempt].cost
+            player.cards[buy_attempt] += 1
+            self.Deck.card_amounts[buy_attempt] -=1
+
     def Turn (self, player, doubles = False):
         # Player chooses how many dice to roll. The player needs a train station to have the option to roll 2 dice
         dice = player.choose_dice()
@@ -71,6 +108,8 @@ class MachiKoro():
 
         # The next step is the buying phase where the player can decide to buy a card
         buy_attempt = player.choose_buy(self.Deck)
+        if buy_attempt >=12 and player.cards[buy_attempt] == 1: pass 
+        if buy_attempt >=12 and buy_attempt<=14 and sum(player.cards[12:15]) == 1: pass
         if player.coins > self.Deck.card_types[buy_attempt].cost and self.Deck.card_amounts[buy_attempt]>0: 
             player.coins -= self.Deck.card_types[buy_attempt].cost
             player.cards[buy_attempt] += 1
@@ -87,9 +126,8 @@ class MachiKoro():
         self.ResetGame()
         anyoneWin = False
         while(anyoneWin == False):
-            print(self.turn_counter)
             for player in self.players:
                 anyoneWin = self.Turn (player)
-                if anyoneWin == True: break
+                if anyoneWin == True: winner = player; break
             self.turn_counter += 1
-        print("SOMEONE WON YAY! FIGURE OUT WHO IT IS PLEASE!")
+        self.WinSequence(winner)

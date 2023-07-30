@@ -55,7 +55,13 @@ class Player():
         self.gamesPlayed = 0
         self.gamesWon = 0
         self.cardHistory = [0]*19
-
+    
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self) :
+        return self.name
+    
     def print_player_info(self):
         print(f"Name: {self.name}")
         print(f"Coins: {self.coins}")
@@ -73,7 +79,10 @@ class Player():
     
     def choose_buy(self, deck):
         for i,card in enumerate(deck.card_types):
-            if deck.card_amounts[i]>0 and card.cost <= self.coins : return i
+            if deck.card_amounts[i]>0 and card.cost <= self.coins: 
+                if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
+                return i
+        return 0
           
     def check_win (self):
         return sum(self.cards[15:]) == 4
@@ -86,3 +95,15 @@ class Player():
     
     def game_info(self):
         return [self.coins, self.cards]
+
+    def TV_Station_Action (self, players):
+        if players[0]== self: target_player = players[1]
+        else: target_player = players[0]
+        return target_player
+    
+    def Business_Center_Action (self, players):
+        if players[0]== self: target_player = players[1]
+        else: target_player = players[0]
+        
+        for i in range(len(target_player.cards)): 
+            if target_player.cards[i]>0: return target_player, i
