@@ -12,9 +12,11 @@ class MachiKoro():
     def ResetGame(self):
         self.turn_counter = 1
         self.Deck.restart()
-        for player in self.players:
+        for i, player in enumerate(self.players):
+            player.turn_order = i
             player.coins = 3
             player.cards = [1]+ [0] * 4 + [1] + [0]*13
+            player.deck = self.Deck
             player.gamesPlayed += 1
 
     def WinSequence(self, winner):
@@ -83,8 +85,12 @@ class MachiKoro():
 
     def Turn (self, player, doubles = False):
         # Player chooses how many dice to roll. The player needs a train station to have the option to roll 2 dice
-        dice = player.choose_dice()
-        roll = sum(np.random.randint(1, 7, size = dice))
+        
+        if(player.cards[15]== 0):dice_num = 1
+        else: dice_num = 1 + player.roll2()
+
+        dice_roll = np.random.randint(1, 7, size = dice_num)
+        roll = sum(dice_roll)
 
         # Player chooses if they want to roll again. The player needs the Radio Tower to have this option
         if(player.check_radio(roll)): 
@@ -116,7 +122,7 @@ class MachiKoro():
             self.Deck.card_amounts[buy_attempt] -=1
 
         # If the player rolled doubles and has the amusement park then they can take another turn once
-        if (doubles == False and player.check_double(roll)): self.Turn(player, doubles = True)
+        if (dice_num == 2 and doubles == False and player.check_Amusement(dice_roll) ): self.Turn(player, doubles = True)
 
         # Check if the player won. If the turn returns true than the player won the game
         return player.check_win()

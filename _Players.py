@@ -44,12 +44,13 @@ Num2Name = {
 }
 class Player():
 
-    def __init__(self, name = "Player", turn_order = 0):
+    def __init__(self, name = "Player"):
         # These are the starting values for a new game. They need to be reset every game
         self.name = name
         self.coins = 3
         self.cards  = np.array([0] * 19)
-        self.turn_order = turn_order
+        self.turn_order = 0
+        self.deck = []
 
         # These are the overall stats of the player over many games
         self.gamesPlayed = 0
@@ -71,8 +72,8 @@ class Player():
     def print_stats(self):
         print(f"{self.name} played {self.gamesPlayed} games and won {self.gamesWon} games. Win percentage {100* self.gamesWon / self.gamesPlayed} \n")
     
-    def choose_dice(self):
-        return 1
+    def roll2(self):
+        return False
     
     def check_radio(self, roll):
         return False
@@ -83,18 +84,6 @@ class Player():
                 if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
                 return i
         return 0
-          
-    def check_win (self):
-        return sum(self.cards[15:]) == 4
-    
-    def check_mall (self):
-        return self.cards[16]
-    
-    def check_double (self, roll):
-        return False
-    
-    def game_info(self):
-        return [self.coins, self.cards]
 
     def TV_Station_Action (self, players):
         if players[0]== self: target_player = players[1]
@@ -107,3 +96,42 @@ class Player():
         
         for i in range(len(target_player.cards)): 
             if target_player.cards[i]>0: return target_player, i
+    
+    def check_mall (self):
+        return self.cards[16]
+    
+    def check_Amusement (self, dice_roll):
+        if(dice_roll[0] == dice_roll[1] and self.cards[17] == 1): return True
+        else: return False      
+    def check_win (self):
+        return sum(self.cards[15:]) == 4
+        
+    def game_info(self):
+        return [self.coins, self.cards]
+
+class Player_1_Die_Strat(Player):
+    def __init__ (self, name, turn_order = 0):
+        super().__init__(name)
+    
+    def choose_buy(self, deck):
+        order = [1,0,6,16,5,12,15,17,18,10]
+        for i in order:
+            if deck.card_amounts[i]>0 and deck.card_types[i].cost <= self.coins: 
+                if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
+                return i
+        return 0
+
+class Player_2_Die_Strat(Player):
+    def __init__ (self, name, turn_order = 0):
+        super().__init__(name)
+    
+    def roll2(self):
+        return True
+    
+    def choose_buy(self, deck):
+        order = [1,15,16,17,18,2,7,8,3,5,12,4,10]
+        for i in order:
+            if deck.card_amounts[i]>0 and deck.card_types[i].cost <= self.coins: 
+                if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
+                return i
+        return 0
