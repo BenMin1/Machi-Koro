@@ -5,6 +5,8 @@ After playing and enjoying this game for hours, I was inspired to put my coding 
 
 #### Repo includes
 
+-Pseudocode flow chart
+
 -Functional game in C++
 
 -Functional game in Python
