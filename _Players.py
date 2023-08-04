@@ -51,10 +51,11 @@ class Player():
         self.cards  = np.array([0] * 19)
         self.turn_order = 0
         self.deck = []
-
+        self.other_players = []
         # These are the overall stats of the player over many games
         self.gamesPlayed = 0
         self.gamesWon = 0
+        self.turns = []
         self.cardHistory = [0]*19
     
     def __str__(self):
@@ -83,7 +84,7 @@ class Player():
             if deck.card_amounts[i]>0 and card.cost <= self.coins: 
                 if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
                 return i
-        return 0
+        return 19
 
     def TV_Station_Action (self, players):
         if players[0]== self: target_player = players[1]
@@ -119,7 +120,7 @@ class Player_1_Die_Strat(Player):
             if deck.card_amounts[i]>0 and deck.card_types[i].cost <= self.coins: 
                 if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
                 return i
-        return 0
+        return 19
 
 class Player_2_Die_Strat(Player):
     def __init__ (self, name, turn_order = 0):
@@ -134,4 +135,42 @@ class Player_2_Die_Strat(Player):
             if deck.card_amounts[i]>0 and deck.card_types[i].cost <= self.coins: 
                 if (i >=12 and i <=14 and sum(self.cards[12:15]) == 1) or (i >=12 and self.cards[i] == 1): continue
                 return i
-        return 0
+        return 19
+
+class NEAT_Player(Player):
+    def __init__ (self, name, turn_order = 0):
+        self.nn =  nn
+        super().__init__(name)
+    
+    def setNN (self, nn):
+        self.nn =nn
+
+    def Run_NN(self, action = 0):
+        # First Create State
+        state = [action] + [self.coins] + self.cards
+        for o_player in self.other_players:
+            state.append(o_player.coins)
+            state += o_player.cards
+
+        state += [0] * (81- len(state))
+
+        # The state is used as the input to the neural network
+        output = self.nn.activate(params)
+        return output.index(max(output))
+
+    def roll2(self):
+        return self.Run_NN(action = 0)
+    
+    def check_radio(self, roll):
+        return self.Run_NN(action = 1)
+    
+    def choose_buy(self, deck):
+        return self.Run_NN(action = 2)
+
+    def TV_Station_Action (self, players):
+        return self.Run_NN(action = 3)
+    
+    def Business_Center_Action (self, players):
+        target_player = self.Run_NN(action = 4)
+        target_card = self.Run_NN(action = 5)
+        return target_player, target_card
