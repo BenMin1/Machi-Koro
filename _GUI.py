@@ -1,85 +1,113 @@
 from tkinter import *
+from tkinter import ttk
+from _Cards import *
 from _Players import *
-def Create_GUI():
+from _MachiKoro import *
 
-    def quit():
-        root.destroy()
+class Window(Frame):
 
-    def getPlayers():
-        play_button.destroy()
-        
-        def playerCount_click(event):
-            numPlayers = (event.widget.cget("text"))
-            numPlayers = int(numPlayers)
-            print("players num is ", numPlayers)
-            for button in buttons:
-                button.destroy()
-            playercount_label.destroy()
-            
-            createPlayers(numPlayers)
+    def __init__(self, master=None):
+        Frame.__init__(self, master)        
+        self.master = master
+        self.treeview = ttk.Treeview(root)
+        # widget can take all window
+        self.pack(fill=BOTH, expand=1)
 
+        # create button, link it to clickExitButton()
+        exitButton = Button(self, text="Exit", command=self.clickExitButton)
+        self.playButton = Button(self, text="Play", command=self.clickPlayButton)
+
+        # place button at (0,0)
+        exitButton.pack(side = BOTTOM)
+        self.playButton.pack(side = TOP)
+
+        self.entries = []
+        self.buttons = []
+        self.labels = []
+    
+        self.players = []
+    def clear_buttons(self):
+        for button in self.buttons: button.destroy()
+        self.buttons = []
+    def clear_entries(self):
+        for entry in self.entries: entry.destroy()
+        self.entries = []
+    def clear_labels(self):
+        for label in self.labels: label.destroy()
+        self.labels = []
+
+    def clickPlayButton(self):
+        self.playButton.destroy()
         playercount_label = Label(root, text = "How many Players? ")
-        playercount_label.pack()
-        buttons = []
-        for i in range(2,5):
-            buttons.append(Button(root, text = str(i)))
+        playercount_label.place(x= 0 , y= 0)
+        self.labels.append(playercount_label)
 
-        for button in buttons:
+        for i in range(1,5):
+            button = Button(self, text=str(i), command=lambda i=i:self.playerCount_click(i))
             button.pack()
-            button.bind("<Button-1>", playerCount_click)  
+            self.buttons.append(button)
 
-    def getName(i):
-        e = Entry(root, width = 50)
-        e.pack()
-        def named():
-            global player_name
-            player_name = e.get()
-            button_name.destroy()
-            e.destroy()
-            player_frames[i].config(text = name)  
+    def clickExitButton(self):
+        self.master.destroy()
+        exit()
 
-        j = str(i)
-        i = int(i)
-        button_name = Button(root, text="Enter Player " + j + "'s name", command = named)
-        button_name.pack()  
-
-    def createPlayers(numPlayers):
-        info_frame = LabelFrame(my_frame, text="Game Info", bd =0)
-        info_frame.grid(row=0,column=50,padx=20,ipadx=20)
-        labelturn = Label(info_frame, text = "GAME SET-UP")
-        labelturn.pack(side = RIGHT)
-        labeldie = Label(info_frame, text = "")
-        labeldie.pack(side = RIGHT, pady = 20, padx = 20)
+    def playerCount_click(self, num_players):
         
-        var = []
-        players = []
-        player_frames = []
-        player_labels = []
-        name = StringVar()
-        for i in range(numPlayers):
-            var.append ( StringVar())
-            var[i].set("coins = 3 cards = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]")
-            player_frames.append (LabelFrame(my_frame, text="player1", bd =0))
-            player_frames[i].grid(row=2*i,column=0,padx=20,ipadx=20)
-            player_labels.append (Label(player_frames[i], textvariable=var[i]))
-            player_labels[i].pack(pady=20)      
-            player_frames[i].config(text = name)  
+        for i in range(num_players):
+            label = Label(root, text=f"Player {i+1}: ")
+            label.pack()
+            self.labels.append(label)
+            entry = Entry(root)
+            entry.pack()
+            self.entries.append(entry)
+        
+        button = Button(root, text="Save Names", command=self.save_names)
+        button.pack()
+        print("players num is ", num_players)
+        self.clear_buttons()
+        self.buttons.append(button)
+        # for button in self.buttons: button.destroy()
+        #createPlayers(numPlayers)
 
-    #Create Tkinter Window
-    root = Tk()
-    root.title('MACHI KORO GAME')
-    root.geometry("900x500")
-    root.configure(background = "blue")
+    def create_table(self):
+        self.treeview.place(x=0, y=0)
+        names = ("Wheat Field","Ranch","Forest","Mine","Apple Orchard", "Bakery","Convenience Store","Cheese Factory","Furniture Factory","Fruit and Vegatable Market","Cafe","Family Restaurant",
+                 "Stadium", "TV Station","Business Center", "Train Station","Shopping Mall","Amusement Park","Radio Tower")
+        self.treeview["columns"] = tuple(range(1, 21))
+        for i in range(1, 20):
+            self.treeview.column(f"#{i}", width=100)
+            self.treeview.heading(f"#{i}", text=names[i-1])
 
-    my_frame = Frame(root, bg = "blue")
-    my_frame.pack(pady=20)
+        self.treeview.column("#0", width=150)
+        self.treeview.heading("#0", text="Players")
+    def update_table(self):
+        for player in self.players:
+            self.treeview.insert("", "end", text=player.name, values= player.cards)
 
-    quit_button = Button(root,text="QUIT", command = quit)
-    quit_button.pack(side = BOTTOM)
+    def play_game(self):
+        print("hello")
+    def save_names(self):
+        names = [entry.get() for entry in self.entries]
+        self.clear_buttons()
+        self.clear_entries()
+        self.clear_labels()
+        for name in names:
+            player = Player(name= name)
+            self.players.append(player)
+            
+        self.treeview.delete(*self.treeview.get_children())
+        game = MachiKoro(players=self.players)
+        game.ResetGame()
+        self.create_table()
+        self.update_table()
+        self.play_game()
+        # for player in players:
+        #     label = Label(root, text=f"Player {player.name}: {player.cards}")
+        #     label.pack()
 
-    play_button = Button(root, text="NEW GAME", command = getPlayers)
-    play_button.pack(side = TOP)
-    
-    root.mainloop()
+root = Tk()
+app = Window(root)
+root.wm_title("Tkinter button")
+root.geometry("320x200")
 
-    
+root.mainloop()   

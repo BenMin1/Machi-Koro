@@ -2,16 +2,13 @@ import numpy as np
 from random import shuffle
 from tkinter import *
 from _Cards import *
-from _GUI import *
+
 class MachiKoro():
 
-    def __init__(self, players = [], GUI = False):
-        # The only thing needed to start a new game is an array with players in it. If the user activates the GUI then the players are reset
-        if GUI == True: print(Create_GUI())           
-
-        elif GUI == False:
-            self.num_players = len(players)
-            self.players = players
+    def __init__(self, players = []):
+        # The only thing needed to start a new game is an array with players in it.
+        self.num_players = len(players)
+        self.players = players
         self.turn_counter = 0
         self.Deck = OpeningDeck()        
 
