@@ -111,7 +111,7 @@ class Player():
         return [self.coins, self.cards]
 
 class Player_1_Die_Strat(Player):
-    def __init__ (self, name, turn_order = 0):
+    def __init__ (self, name):
         super().__init__(name)
     
     def choose_buy(self, deck):
@@ -123,7 +123,7 @@ class Player_1_Die_Strat(Player):
         return 19
 
 class Player_2_Die_Strat(Player):
-    def __init__ (self, name, turn_order = 0):
+    def __init__ (self, name):
         super().__init__(name)
     
     def roll2(self):
@@ -138,7 +138,7 @@ class Player_2_Die_Strat(Player):
         return 19
 
 class NEAT_Player(Player):
-    def __init__ (self, name, turn_order = 0):
+    def __init__ (self, name, nn):
         self.nn =  nn
         super().__init__(name)
     
